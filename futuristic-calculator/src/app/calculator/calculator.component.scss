@@ -1,0 +1,47 @@
+.calculator-container {
+  max-width: 500px;
+  border: 1px solid grey;
+  padding: 2px;
+}
+.calculator-display {
+  padding: 10px; // Add some padding around the buttons
+  border: 1px solid grey;
+  font-family: monospace;
+  font-size: 3em;
+  font-weight: bolder;
+}
+
+.calculator-buttons {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr); // Defines a 4-column grid
+  gap: 10px; // Adjust gap as needed for your futuristic design
+  padding: 10px; // Add some padding around the buttons
+  border: 1px solid grey;
+}
+
+.span-three {
+  grid-column: span 3; // Makes the button span 3 grid columns
+}
+
+.span-two {
+  grid-column: span 2; // Makes the button span 2 grid columns
+}
+
+.button {
+  // Your existing common button styles will go here
+  // e.g., padding, font-size, border, background-color, color, etc.
+  // For a futuristic look, you might use:
+  // background: rgba(255, 255, 255, 0.1);
+  // border: 1px solid rgba(255, 255, 255, 0.2);
+  // color: #00f0ff; // Neon-like text
+  // border-radius: 8px; // Slightly rounded corners
+  // box-shadow: 0 0 5px rgba(0, 240, 255, 0.5); // Glow effect
+}
+
+// You'll also have specific styles for:
+// .function-button {}
+// .operator-button {}
+// .digit-button {}
+// .equals-button {}
+// .calculator-display {}
+// .calculator-container {}

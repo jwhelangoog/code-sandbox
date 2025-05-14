@@ -1,0 +1,34 @@
+<div class="calculator-container">
+  <div class="calculator-display">{{ displayValue }}</div>
+
+  <div class="calculator-buttons">
+    <!-- Row 1 -->
+    <button (click)="clear()" class="button function-button span-three">C</button>
+    <!-- <button (click)="toggleSign()" class="button function-button">+/-</button> --> <!-- Placeholder -->
+    <!-- <button (click)="percentage()" class="button function-button">%</button> -->   <!-- Placeholder -->
+    <button (click)="handleOperator('/')" class="button operator-button">/</button>
+
+    <!-- Row 2 -->
+    <button (click)="appendDigit('7')" class="button digit-button">7</button>
+    <button (click)="appendDigit('8')" class="button digit-button">8</button>
+    <button (click)="appendDigit('9')" class="button digit-button">9</button>
+    <button (click)="handleOperator('*')" class="button operator-button">x</button>
+
+    <!-- Row 3 -->
+    <button (click)="appendDigit('4')" class="button digit-button">4</button>
+    <button (click)="appendDigit('5')" class="button digit-button">5</button>
+    <button (click)="appendDigit('6')" class="button digit-button">6</button>
+    <button (click)="handleOperator('-')" class="button operator-button">-</button>
+
+    <!-- Row 4 -->
+    <button (click)="appendDigit('1')" class="button digit-button">1</button>
+    <button (click)="appendDigit('2')" class="button digit-button">2</button>
+    <button (click)="appendDigit('3')" class="button digit-button">3</button>
+    <button (click)="handleOperator('+')" class="button operator-button">+</button>
+
+    <!-- Row 5 -->
+    <button (click)="appendDigit('0')" class="button digit-button span-two">0</button>
+    <button (click)="appendDigit('.')" class="button digit-button">.</button>
+    <button (click)="handleEquals()" class="button equals-button">=</button>
+  </div>
+</div>
