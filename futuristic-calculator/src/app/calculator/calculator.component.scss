@@ -1,47 +1,109 @@
-.calculator-container {
-  max-width: 500px;
-  border: 1px solid grey;
-  padding: 2px;
-}
-.calculator-display {
-  padding: 10px; // Add some padding around the buttons
-  border: 1px solid grey;
-  font-family: monospace;
-  font-size: 3em;
-  font-weight: bolder;
+// Futuristic Color Palette
+$bg-dark: #0a0a1f; // Deep space blue/purple
+$bg-medium: #1a1a3a; // Slightly lighter panel background
+$neon-cyan: #00f0ff;
+$neon-pink: #ff00ff;
+$neon-green: #00ff8a;
+$text-light: #e0e0ff;
+$border-glow: rgba($neon-cyan, 0.5);
+$button-bg: rgba(30, 30, 60, 0.7); // Semi-transparent button bg
+$button-hover-bg: rgba(50, 50, 90, 0.9);
+
+.futuristic-calculator-frame {
+  width: 360px; // Adjusted for a more compact, modern feel
+  background: linear-gradient(145deg, $bg-medium, darken($bg-medium, 5%));
+  border-radius: 20px; // More pronounced rounded corners
+  padding: 20px;
+  box-shadow: 0 0 15px rgba($neon-cyan, 0.2), 0 0 30px rgba($neon-pink, 0.1), inset 0 0 10px rgba(black, 0.3);
+  border: 1px solid rgba($neon-cyan, 0.3);
 }
 
-.calculator-buttons {
+.display-panel {
+  background-color: rgba(0, 0, 0, 0.5); // Dark, glassy display
+  color: $neon-green;
+  font-family: 'Orbitron', 'Courier New', Courier, monospace; // Suggesting a futuristic font (add import if needed)
+  font-size: 3.5em; // Larger display text
+  font-weight: bold;
+  padding: 25px 20px;
+  text-align: right;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  min-height: 70px; // Ensure display has some height
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.5), 0 0 8px rgba($neon-green, 0.3);
+  border: 1px solid rgba($neon-green, 0.2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.keypad-matrix {
   display: grid;
   grid-template-columns: repeat(4, 1fr); // Defines a 4-column grid
-  gap: 10px; // Adjust gap as needed for your futuristic design
-  padding: 10px; // Add some padding around the buttons
-  border: 1px solid grey;
+  gap: 12px; // Slightly larger gap for a modern feel
 }
 
 .span-three {
   grid-column: span 3; // Makes the button span 3 grid columns
 }
-
 .span-two {
   grid-column: span 2; // Makes the button span 2 grid columns
 }
 
 .button {
-  // Your existing common button styles will go here
-  // e.g., padding, font-size, border, background-color, color, etc.
-  // For a futuristic look, you might use:
-  // background: rgba(255, 255, 255, 0.1);
-  // border: 1px solid rgba(255, 255, 255, 0.2);
-  // color: #00f0ff; // Neon-like text
-  // border-radius: 8px; // Slightly rounded corners
-  // box-shadow: 0 0 5px rgba(0, 240, 255, 0.5); // Glow effect
+  background: $button-bg;
+  border: 1px solid rgba($neon-cyan, 0.2);
+  color: $text-light;
+  font-size: 1.8em; // Larger button text
+  font-weight: 500;
+  padding: 20px;
+  border-radius: 10px; // Rounded buttons
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.1);
+  text-shadow: 0 0 3px rgba(black, 0.5);
+
+  &:hover {
+    background: $button-hover-bg;
+    border-color: rgba($neon-cyan, 0.5);
+    box-shadow: 0 0 10px rgba($neon-cyan, 0.3), 0 3px 7px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,255,255,0.1);
+    transform: translateY(-2px); // Slight lift on hover
+  }
+
+  &:active {
+    background: darken($button-hover-bg, 5%);
+    transform: translateY(0px); // Press down effect
+    box-shadow: 0 1px 3px rgba(0,0,0,0.4), inset 0 2px 3px rgba(0,0,0,0.3);
+  }
 }
 
-// You'll also have specific styles for:
-// .function-button {}
-// .operator-button {}
-// .digit-button {}
-// .equals-button {}
-// .calculator-display {}
-// .calculator-container {}
+.digit-button {
+  color: $neon-cyan; // Digits stand out
+  font-weight: bold;
+}
+
+.operator-button {
+  color: $neon-pink; // Operators in a different neon color
+  font-weight: bold;
+}
+
+.function-button { // For C, +/-, %
+  color: $neon-green;
+  font-weight: bold;
+}
+
+.equals-button {
+  background: linear-gradient(145deg, $neon-pink, darken($neon-pink, 15%));
+  color: $bg-dark; // Dark text on bright button
+  font-weight: bold;
+  border-color: rgba(darken($neon-pink, 20%), 0.5);
+  grid-column: span 1; // Ensure it takes one column if not specified otherwise
+
+  &:hover {
+    background: linear-gradient(145deg, lighten($neon-pink, 5%), $neon-pink);
+    box-shadow: 0 0 15px rgba($neon-pink, 0.5), 0 3px 7px rgba(0,0,0,0.4);
+  }
+
+  &:active {
+    background: linear-gradient(145deg, darken($neon-pink, 5%), darken($neon-pink, 20%));
+  }
+}

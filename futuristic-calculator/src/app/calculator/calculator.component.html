@@ -1,18 +1,18 @@
-<div class="calculator-container">
-  <div class="calculator-display">{{ displayValue }}</div>
+<div class="futuristic-calculator-frame">
+  <div class="display-panel futuristic-text">{{ displayValue }}</div>
 
-  <div class="calculator-buttons">
+  <div class="keypad-matrix">
     <!-- Row 1 -->
-    <button (click)="clear()" class="button function-button span-three">C</button>
+    <button (click)="clear()" class="button function-button span-three">AC</button>
     <!-- <button (click)="toggleSign()" class="button function-button">+/-</button> --> <!-- Placeholder -->
     <!-- <button (click)="percentage()" class="button function-button">%</button> -->   <!-- Placeholder -->
-    <button (click)="handleOperator('/')" class="button operator-button">/</button>
+    <button (click)="handleOperator('/')" class="button operator-button">÷</button>
 
     <!-- Row 2 -->
     <button (click)="appendDigit('7')" class="button digit-button">7</button>
     <button (click)="appendDigit('8')" class="button digit-button">8</button>
     <button (click)="appendDigit('9')" class="button digit-button">9</button>
-    <button (click)="handleOperator('*')" class="button operator-button">x</button>
+    <button (click)="handleOperator('*')" class="button operator-button">×</button>
 
     <!-- Row 3 -->
     <button (click)="appendDigit('4')" class="button digit-button">4</button>
