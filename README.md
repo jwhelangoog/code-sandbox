@@ -4,7 +4,7 @@ This is a sandbox repo used for testing various features and products.
 
 <mark>Use for experimentation only</mark>
 
-## Futuristic Calculator (Angular)
+## Calculator (Angular webapp)
 
 ![Futuristic Calc Screenshot](./public/calc-screenshot-052325.png)
 
@@ -15,8 +15,6 @@ This project was generated with [Angular CLI](https://github.com/angular/angular
 - Setup the environment, if not already configured:
   - Install NodeJS: [go/nodejs/installing-node](http://go/nodejs/installing-node)
   - Install the Angular CLI: `npm install -g @angular/cli`
-
-- Open a terminal into the `futuristic-calculator` directory
 
 - Fetch the app dependencies, run: `npm install`
 
