@@ -1,78 +1,184 @@
-import {Component} from '@angular/core';
+import {Component, HostListener, ElementRef, ViewChild, AfterViewInit} from '@angular/core';
+import {CommonModule} from '@angular/common';
+
+interface HistoryEntry {
+  expression: string;
+  result: string;
+  timestamp: Date;
+}
 
 @Component({
-  selector: 'app-calculator', // This selector is for the CalculatorComponent
+  selector: 'app-calculator',
   standalone: true,
-  templateUrl: './calculator.component.html', // Make sure this HTML file exists
-  styleUrls: ['./calculator.component.scss']   // Make sure this SCSS file exists
+  imports: [CommonModule],
+  templateUrl: './calculator.component.html',
+  styleUrls: ['./calculator.component.scss']
 })
-export class CalculatorComponent {
+export class CalculatorComponent implements AfterViewInit {
+  @ViewChild('displayPanel') displayPanel!: ElementRef;
+  @ViewChild('historyEntries') historyEntries!: ElementRef;
   displayValue: string = '0';
   currentInput: string = '';
   operator: string | null = null;
   firstOperand: number | null = null;
   waitingForSecondOperand: boolean = false;
   private errorState: boolean = false;
+  private readonly BASE_FONT_SIZE = 3.5;
+  private readonly MIN_FONT_SIZE = 0.5;
+  private readonly ERROR_DISPLAY_TIME = 1000;
+
+  // History tracking
+  history: HistoryEntry[] = [];
+  private inputHistory: string[] = [];
+  private operationSequence: string[] = [];
+  private lastValidDisplay: string = '0';
+
+  ngAfterViewInit() {
+    this.updateDisplay();
+  }
 
   private formatDisplayNumber(num: number): string {
     if (Number.isInteger(num)) {
       return String(num);
     }
-    // Limit decimal places and try to handle floating point inaccuracies for display
     return parseFloat(num.toFixed(10)).toString();
   }
 
-  private showError(message: string): void {
-    this.displayValue = message;
-    this.errorState = true;
-    // Current input and operator states are not immediately cleared,
-    // allowing the user to see the context of the error.
-    // 'clear()' will reset everything.
-  }
-
-  updateDisplay(): void {
-    if (this.errorState) {
-      // displayValue is already set by showError
-      return;
-    }
+  private updateDisplay(): void {
     if (this.currentInput === '') {
-      // If waiting for the second operand, show the first operand. Otherwise, show '0'.
       this.displayValue = (this.waitingForSecondOperand && this.firstOperand !== null)
         ? this.formatDisplayNumber(this.firstOperand)
         : '0';
     } else {
       this.displayValue = this.currentInput;
     }
+
+    if (this.displayPanel) {
+      this.displayPanel.nativeElement.textContent = this.displayValue;
+      this.scaleTextToFit();
+    }
+  }
+
+  private scrollToLatestEntry(): void {
+    if (this.historyEntries) {
+      setTimeout(() => {
+        const container = this.historyEntries.nativeElement;
+        container.scrollTop = container.scrollHeight;
+      });
+    }
+  }
+
+  private async showError(message: string): Promise<void> {
+    this.errorState = true;
+    this.displayValue = message;
+
+    if (this.displayPanel) {
+      this.displayPanel.nativeElement.textContent = message;
+      this.scaleTextToFit();
+    }
+
+    this.history.push({
+      expression: this.operationSequence.join(''),
+      result: message,
+      timestamp: new Date()
+    });
+    this.scrollToLatestEntry();
+
+    try {
+      await new Promise(resolve => setTimeout(resolve, this.ERROR_DISPLAY_TIME));
+
+      this.displayValue = this.lastValidDisplay;
+      this.currentInput = this.lastValidDisplay;
+      this.firstOperand = parseFloat(this.lastValidDisplay);
+      this.operator = null;
+      this.waitingForSecondOperand = false;
+      this.errorState = false;
+
+      this.updateDisplay();
+    } catch (error) {
+      this.errorState = false;
+      this.displayValue = '0';
+      this.currentInput = '';
+      this.operator = null;
+      this.firstOperand = null;
+      this.waitingForSecondOperand = false;
+      this.updateDisplay();
+    }
+  }
+
+  private scaleTextToFit(): void {
+    const display = this.displayPanel.nativeElement;
+    const text = display.textContent;
+
+    if (!text) return;
+
+    display.style.fontSize = `${this.BASE_FONT_SIZE}em`;
+
+    const containerWidth = display.clientWidth - 40;
+
+    const tempSpan = document.createElement('span');
+    tempSpan.style.visibility = 'hidden';
+    tempSpan.style.position = 'absolute';
+    tempSpan.style.whiteSpace = 'nowrap';
+    tempSpan.style.fontSize = `${this.BASE_FONT_SIZE}em`;
+    tempSpan.style.fontFamily = getComputedStyle(display).fontFamily;
+    tempSpan.style.fontWeight = getComputedStyle(display).fontWeight;
+    tempSpan.textContent = text;
+    document.body.appendChild(tempSpan);
+
+    const textWidth = tempSpan.offsetWidth;
+    document.body.removeChild(tempSpan);
+
+    if (textWidth > containerWidth) {
+      const scale = containerWidth / textWidth;
+      const newFontSize = Math.max(this.BASE_FONT_SIZE * scale, this.MIN_FONT_SIZE);
+      display.style.fontSize = `${newFontSize}em`;
+    }
   }
 
   appendDigit(digit: string): void {
-    if (this.errorState) return; // Block input if in error state
+    if (this.errorState) return;
 
-    // If an operator was just pressed, or after an equals, the next digit starts a new number.
     if (this.waitingForSecondOperand) {
       this.currentInput = digit;
-      this.waitingForSecondOperand = false; // We are now entering the second operand
+      this.waitingForSecondOperand = false;
+      this.inputHistory = [digit];
+      this.operationSequence.push(digit);
     } else {
-      // If currentInput holds the result of a previous calculation (e.g., after '='),
-      // and a new digit is pressed, it should start a new number.
-      // This state is when `operator` is null and `firstOperand` holds the result.
       if (this.operator === null && this.firstOperand !== null && this.currentInput === this.formatDisplayNumber(this.firstOperand)) {
         this.currentInput = digit;
-        this.firstOperand = null; // Start fresh for a new calculation not involving the previous result directly
+        this.firstOperand = null;
+        this.inputHistory = [digit];
+        this.operationSequence = [digit];
       } else if (digit === '.' && this.currentInput.includes('.')) {
-        return; // Prevent multiple decimals
+        return;
       } else if (this.currentInput === '0' && digit !== '.') {
-        this.currentInput = digit; // Replace initial '0'
-      } else if (this.currentInput === '-0' && digit !== '.') { // Handle typing after a negation if implemented
+        this.currentInput = digit;
+        this.inputHistory = [digit];
+        this.operationSequence = [digit];
+      } else if (this.currentInput === '-0' && digit !== '.') {
         this.currentInput = '-' + digit;
+        this.inputHistory = ['-', digit];
+        this.operationSequence = ['-', digit];
       } else {
-        // Append digit, but prevent excessively long numbers if desired (e.g. by checking length)
-        if (this.currentInput.length < 16) { // Arbitrary limit
+        if (this.currentInput.length < 16) {
           this.currentInput += digit;
+          this.inputHistory.push(digit);
+          this.operationSequence.push(digit);
         }
       }
     }
     this.updateDisplay();
+  }
+
+  handleBackspace(): void {
+    if (this.errorState || this.waitingForSecondOperand) return;
+
+    if (this.inputHistory.length > 0) {
+      this.inputHistory.pop();
+      this.currentInput = this.inputHistory.length === 0 ? '0' : this.inputHistory.join('');
+      this.updateDisplay();
+    }
   }
 
   handleOperator(nextOperator: string): void {
@@ -80,10 +186,8 @@ export class CalculatorComponent {
 
     const inputValue = parseFloat(this.currentInput);
 
-    // If user presses an operator consecutively (e.g. 5 + -), update the operator
     if (this.operator && this.waitingForSecondOperand) {
       this.operator = nextOperator;
-      // displayValue should already be showing firstOperand, no need to updateDisplay here
       return;
     }
 
@@ -91,39 +195,27 @@ export class CalculatorComponent {
     if (!isNaN(inputValue)) {
       operandToUse = inputValue;
     } else if (this.firstOperand !== null && (this.currentInput === '' || this.currentInput === this.formatDisplayNumber(this.firstOperand))) {
-      // This case handles pressing an operator after a result (e.g., 5 = then +)
-      // or if currentInput was cleared somehow but firstOperand is valid.
       operandToUse = this.firstOperand;
     } else {
-      // Not a valid number to start or continue an operation
-      // (e.g. pressed operator with no preceding number and no prior result)
       return;
     }
 
     if (this.firstOperand === null) {
-      // This is the first number in an operation
       this.firstOperand = operandToUse;
     } else if (this.operator) {
-      // An operation is pending (e.g., 5 + 3 then *), calculate it
-      // operandToUse is the second operand for the pending operation
       const result = this.performCalculation(this.firstOperand, operandToUse, this.operator);
-      if (this.errorState) return; // performCalculation might set errorState
+      if (this.errorState) return;
 
       this.firstOperand = result;
-      // currentInput should reflect the result of this intermediate calculation
       this.currentInput = this.formatDisplayNumber(result);
     } else {
-      // firstOperand exists, but no operator (e.g. after an equals, then an operator is pressed)
-      // The current input (operandToUse) becomes the new firstOperand for the new operation.
-      // Or, if currentInput was empty, firstOperand (the previous result) is re-used.
       this.firstOperand = operandToUse;
     }
 
     this.operator = nextOperator;
     this.waitingForSecondOperand = true;
-    // Display the first operand (or the intermediate result)
-    // currentInput will be reset by the next appendDigit call
-    this.updateDisplay(); // Update display to show firstOperand or result before new input
+    this.operationSequence.push(` ${nextOperator} `);
+    this.updateDisplay();
   }
 
   performCalculation(op1: number, op2: number, currentOp: string): number {
@@ -136,51 +228,132 @@ export class CalculatorComponent {
         return op1 * op2;
       case '/':
         if (op2 === 0) {
-          this.showError("Error: Div by 0");
+          this.showError("Calc Error");
           return NaN;
         }
         return op1 / op2;
       default:
-        this.showError("Error: Bad Op");
+        this.showError("Calc Error");
         return NaN;
     }
   }
 
   handleEquals(): void {
-    if (this.errorState) return;
+    if (this.operator && this.firstOperand !== null) {
+      const secondOperand = this.currentInput ? parseFloat(this.currentInput) : this.firstOperand;
+      const result = this.performCalculation(this.firstOperand, secondOperand, this.operator);
 
-    const secondOperandValue = parseFloat(this.currentInput);
+      if (!isNaN(result)) {
+        const formattedResult = this.formatDisplayNumber(result);
+        this.displayValue = formattedResult;
+        this.currentInput = formattedResult;
+        this.firstOperand = result;
+        this.operator = null;
+        this.waitingForSecondOperand = false;
+        this.lastValidDisplay = formattedResult;
 
-    if (this.operator === null || this.firstOperand === null || isNaN(secondOperandValue)) {
-      // Not enough information (e.g., "5 + =" or just "=" or "abc =")
-      // If waitingForSecondOperand is true, it means an operator was pressed,
-      // but currentInput might not be a complete second number yet.
-      // The isNaN(secondOperandValue) check covers incomplete/invalid second number.
-      return;
+        this.history.push({
+          expression: this.operationSequence.join(''),
+          result: formattedResult,
+          timestamp: new Date()
+        });
+        this.scrollToLatestEntry();
+      }
+
+      this.updateDisplay();
     }
-
-    const result = this.performCalculation(this.firstOperand, secondOperandValue, this.operator);
-    if (this.errorState) return; // performCalculation might set errorState
-
-    this.displayValue = this.formatDisplayNumber(result);
-    this.currentInput = this.displayValue; // The result is now the current input
-    this.firstOperand = result; // Store result for potential chaining (e.g., if an operator is pressed next)
-    this.operator = null;       // Clear operator after equals
-    this.waitingForSecondOperand = false; // Not waiting for a second operand for the *completed* operation
   }
 
   clear(): void {
+    // Add history entry if there's a current input or operation
+    if (this.currentInput !== '' || this.operator !== null || this.firstOperand !== null) {
+      this.history.push({
+        expression: 'AC',
+        result: '0',
+        timestamp: new Date()
+      });
+      this.scrollToLatestEntry();
+    }
+
     this.displayValue = '0';
     this.currentInput = '';
     this.operator = null;
     this.firstOperand = null;
     this.waitingForSecondOperand = false;
-    this.errorState = false; // Clear any error state
-    this.updateDisplay(); // Ensure display reflects the cleared state
+    this.errorState = false;
+    this.inputHistory = [];
+    this.operationSequence = [];
+    this.lastValidDisplay = '0';
+    this.updateDisplay();
   }
 
-  // You might want to add other functions like:
-  // - toggleSign() for +/-
-  // - percentage() for %
-  // - clearEntry() (CE) to clear only the current input
+  clearHistory(): void {
+    this.history = [];
+  }
+
+  @HostListener('window:keydown', ['$event'])
+  handleKeyboardEvent(event: KeyboardEvent): void {
+    if (this.errorState) return;
+
+    if (/^[0-9]$/.test(event.key)) {
+      this.appendDigit(event.key);
+    } else if (event.key === '.' || event.key === ',') {
+      this.appendDigit('.');
+    } else if (event.key === '+') {
+      this.handleOperator('+');
+    } else if (event.key === '-') {
+      this.handleOperator('-');
+    } else if (event.key === '*') {
+      this.handleOperator('*');
+    } else if (event.key === '/') {
+      this.handleOperator('/');
+    } else if (event.key === 'Enter' || event.key === '=') {
+      this.handleEquals();
+    } else if (event.key === 'Escape') {
+      event.shiftKey ? this.clearHistory() : this.clear();
+    } else if (event.key === '!') {
+      this.toggleSign();
+    } else if (event.key === '%') {
+      this.percentage();
+    } else if (event.key === 'Backspace') {
+      this.handleBackspace();
+    }
+  }
+
+  toggleSign(): void {
+    if (this.errorState) return;
+
+    if (this.waitingForSecondOperand) {
+      if (this.firstOperand !== null) {
+        this.firstOperand = -this.firstOperand;
+        this.currentInput = this.formatDisplayNumber(this.firstOperand);
+      }
+    } else {
+      if (this.currentInput === '0') return;
+
+      if (this.currentInput.startsWith('-')) {
+        this.currentInput = this.currentInput.substring(1);
+      } else {
+        this.currentInput = '-' + this.currentInput;
+      }
+    }
+    this.updateDisplay();
+  }
+
+  percentage(): void {
+    if (this.errorState) return;
+
+    if (this.waitingForSecondOperand) {
+      if (this.firstOperand !== null) {
+        this.firstOperand = this.firstOperand / 100;
+        this.currentInput = this.formatDisplayNumber(this.firstOperand);
+      }
+    } else {
+      const value = parseFloat(this.currentInput);
+      if (!isNaN(value)) {
+        this.currentInput = this.formatDisplayNumber(value / 100);
+      }
+    }
+    this.updateDisplay();
+  }
 }
